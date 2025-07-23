@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { LogOut, UserPlus, FileText, Edit3, Plus, Save, X } from 'lucide-react'
+import { LogOut, UserPlus, FileText, Edit3, Plus, Save, X, Home } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import type { Student, Score } from '../lib/supabase'
@@ -136,6 +136,12 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
+        <div className="header-left">
+          <a href="/" className="back-home-button">
+            <Home className="button-icon" />
+            返回主页
+          </a>
+        </div>
         <h1>教师管理面板</h1>
         <button onClick={signOut} className="logout-button">
           <LogOut className="button-icon" />
