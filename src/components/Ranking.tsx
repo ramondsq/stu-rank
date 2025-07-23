@@ -102,7 +102,7 @@ const Ranking: React.FC = () => {
   return (
     <div className="ranking-container">
       <div className="ranking-header">
-        <h1>学生成绩排名</h1>
+        <h1>C++刷题积分排名</h1>
         <p>根据总成绩排序</p>
       </div>
 
