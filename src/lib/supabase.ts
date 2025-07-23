@@ -22,9 +22,10 @@ export interface Score {
   student: Student
 }
 
-export interface StudentWithLatestScore {
+export interface StudentWithTotalScore {
   id: number
   name: string
-  latest_score: number | null
+  total_score: number
+  score_count: number
   latest_date: string | null
 }

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { Trophy, Medal, Award, User, Calendar } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import type { StudentWithLatestScore } from '../lib/supabase'
+import type { StudentWithTotalScore } from '../lib/supabase'
 import './Ranking.css'
 
 const Ranking: React.FC = () => {
-  const [students, setStudents] = useState<StudentWithLatestScore[]>([])
+  const [students, setStudents] = useState<StudentWithTotalScore[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -29,29 +29,31 @@ const Ranking: React.FC = () => {
 
       if (error) throw error
 
-      // 处理数据，获取每个学生的最新成绩
-      const studentsWithScores: StudentWithLatestScore[] = data.map((student: any) => {
+      // 处理数据，计算每个学生的总成绩
+      const studentsWithScores: StudentWithTotalScore[] = data.map((student: any) => {
         const scores = student.scores || []
-        const latestScore = scores.length > 0 
+        const totalScore = scores.reduce((sum: number, score: any) => sum + score.score, 0)
+        const latestDate = scores.length > 0 
           ? scores.reduce((latest: any, current: any) => 
               new Date(current.date) > new Date(latest.date) ? current : latest
-            )
+            ).date
           : null
 
         return {
           id: student.id,
           name: student.name,
-          latest_score: latestScore?.score || null,
-          latest_date: latestScore?.date || null
+          total_score: totalScore,
+          score_count: scores.length,
+          latest_date: latestDate
         }
       })
 
-      // 按成绩排序（从高到低），没有成绩的排在最后
+      // 按总成绩排序（从高到低），没有成绩的排在最后
       const sortedStudents = studentsWithScores.sort((a, b) => {
-        if (a.latest_score === null && b.latest_score === null) return 0
-        if (a.latest_score === null) return 1
-        if (b.latest_score === null) return -1
-        return b.latest_score - a.latest_score
+        if (a.total_score === 0 && b.total_score === 0) return 0
+        if (a.total_score === 0) return 1
+        if (b.total_score === 0) return -1
+        return b.total_score - a.total_score
       })
 
       setStudents(sortedStudents)
@@ -101,7 +103,7 @@ const Ranking: React.FC = () => {
     <div className="ranking-container">
       <div className="ranking-header">
         <h1>学生成绩排名</h1>
-        <p>根据最新成绩排序</p>
+        <p>根据总成绩排序</p>
       </div>
 
       {students.length === 0 ? (
@@ -118,12 +120,13 @@ const Ranking: React.FC = () => {
                 <div className="student-info">
                   <h3>{student.name}</h3>
                   <div className="score-info">
-                    {student.latest_score !== null ? (
+                    {student.total_score > 0 ? (
                       <>
-                        <span className="score">{student.latest_score} 分</span>
+                        <span className="score">{student.total_score} 分 (总分)</span>
+                        <span className="score-count">共 {student.score_count} 次记录</span>
                         <span className="date">
                           <Calendar className="date-icon" />
-                          {formatDate(student.latest_date)}
+                          最近更新: {formatDate(student.latest_date)}
                         </span>
                       </>
                     ) : (
