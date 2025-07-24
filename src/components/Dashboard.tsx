@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { LogOut, UserPlus, FileText, Edit3, Plus, Save, X, Home } from 'lucide-react'
+import { LogOut, UserPlus, FileText, Edit3, Plus, Save, X, Home, Trash2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import type { Student, Score } from '../lib/supabase'
@@ -129,6 +129,55 @@ const Dashboard: React.FC = () => {
     setEditDate('')
   }
 
+  const deleteStudent = async (studentId: number) => {
+    if (!confirm('确定要删除这个学生吗？删除后相关的成绩记录也会被删除。')) {
+      return
+    }
+
+    try {
+      // 先删除该学生的所有成绩记录
+      const { error: scoresError } = await supabase
+        .from('scores')
+        .delete()
+        .eq('student_id', studentId)
+
+      if (scoresError) throw scoresError
+
+      // 再删除学生记录
+      const { error: studentError } = await supabase
+        .from('students')
+        .delete()
+        .eq('id', studentId)
+
+      if (studentError) throw studentError
+
+      fetchData()
+    } catch (error) {
+      console.error('Error deleting student:', error)
+      alert('删除学生失败，请重试')
+    }
+  }
+
+  const deleteScore = async (scoreId: number) => {
+    if (!confirm('确定要删除这条成绩记录吗？')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('scores')
+        .delete()
+        .eq('id', scoreId)
+
+      if (error) throw error
+
+      fetchData()
+    } catch (error) {
+      console.error('Error deleting score:', error)
+      alert('删除成绩记录失败，请重试')
+    }
+  }
+
   if (loading) {
     return <div className="dashboard-loading">加载中...</div>
   }
@@ -213,6 +262,37 @@ const Dashboard: React.FC = () => {
           </form>
         </div>
 
+        {/* 学生管理 */}
+        <div className="section">
+          <h2>
+            <UserPlus className="section-icon" />
+            学生管理
+          </h2>
+          <div className="students-list">
+            {students.length === 0 ? (
+              <p className="empty-message">暂无学生</p>
+            ) : (
+              students.map((student) => (
+                <div key={student.id} className="student-item">
+                  <div className="student-info">
+                    <strong>{student.name}</strong>
+                    <span className="student-date">
+                      添加时间: {new Date(student.created_at).toLocaleDateString('zh-CN')}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => deleteStudent(student.id)}
+                    className="delete-button"
+                    title="删除学生"
+                  >
+                    <Trash2 className="button-icon" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
         {/* 成绩记录 */}
         <div className="section">
           <h2>
@@ -255,12 +335,22 @@ const Dashboard: React.FC = () => {
                       <div className="score-details">
                         <span className="score">{score.score} 分</span>
                         <span className="date">{new Date(score.date).toLocaleDateString('zh-CN')}</span>
-                        <button
-                          onClick={() => startEditScore(score)}
-                          className="edit-button"
-                        >
-                          <Edit3 className="button-icon" />
-                        </button>
+                        <div className="score-actions">
+                          <button
+                            onClick={() => startEditScore(score)}
+                            className="edit-button"
+                            title="编辑成绩"
+                          >
+                            <Edit3 className="button-icon" />
+                          </button>
+                          <button
+                            onClick={() => deleteScore(score.id)}
+                            className="delete-button"
+                            title="删除成绩"
+                          >
+                            <Trash2 className="button-icon" />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
